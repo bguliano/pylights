@@ -7,6 +7,7 @@ from objects import Song
 class VixenScanner:
     def __init__(self, vixen_dir: str):
         self.vixen_dir = Path(vixen_dir)
+        assert self.vixen_dir.exists()
         assert self.vixen_dir.name == 'Vixen 3'
         self.songs: list[Song] | None = None
 

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Generator
 
 import zstandard as zstd
 
@@ -135,8 +136,11 @@ class FSEQParser:
     def get_frame_at_ms(self, milliseconds: int) -> FSEQFrame:
         return self.get_frame_at_index(milliseconds // self.step_time_in_ms)
 
+    def iter_frames(self) -> Generator[FSEQFrame, None, None]:
+        for i in range(self.number_of_frames):
+            yield self.get_frame_at_index(i)
+
 
 if __name__ == '__main__':
     fseq_file = Path('/Volumes/USBX/Vixen 3/Export/Carey Grinch.fseq')
     parser = FSEQParser(fseq_file)
-    pass
