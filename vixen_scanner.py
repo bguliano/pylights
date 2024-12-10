@@ -24,6 +24,12 @@ class VixenScanner:
             return None
         mp3_filename = match.group(0)
 
+        # next, make sure the mp3 file and fseq file actually exist
+        if not (mp3_file := mp3_dir / mp3_filename).exists():
+            return None
+        if not (fseq_file := fseq_dir / (tim_file.stem + '.fseq')).exists():
+            return None
+
         # then, create the Song object and return it
         return Song(
             path=tim_file,
