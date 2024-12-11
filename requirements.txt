@@ -1,0 +1,7 @@
+Flask~=3.1.0
+gpiozero~=2.0.1
+mutagen~=1.47.0
+pygame~=2.6.1
+zstandard~=0.23.0
+fabric~=3.2.2
+humanize~=4.11.0

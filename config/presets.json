@@ -1,0 +1,32 @@
+{
+  "All white": [
+    "white bottom",
+    "white middle",
+    "white top",
+    "star"
+  ],
+  "All white with mini trees": [
+    "white bottom",
+    "white middle",
+    "white top",
+    "star",
+    "mini tree l",
+    "mini tree r"
+  ],
+  "All color": [
+    "color bottom",
+    "color middle",
+    "color top",
+    "large bulbs"
+  ],
+  "Whole tree": [
+    "white bottom",
+    "white middle",
+    "white top",
+    "color bottom",
+    "color middle",
+    "color top",
+    "large bulbs",
+    "star"
+  ]
+}

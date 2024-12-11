@@ -1,15 +1,14 @@
 import re
 from pathlib import Path
 
-from objects import Song
+from common import Song, DEBUG_VIXEN_DIR
 
 
 class VixenScanner:
-    def __init__(self, vixen_dir: str):
-        self.vixen_dir = Path(vixen_dir)
+    def __init__(self, vixen_dir: Path):
+        self.vixen_dir = vixen_dir
         assert self.vixen_dir.exists()
         assert self.vixen_dir.name == 'Vixen 3'
-        self.songs: list[Song] | None = None
 
     def _create_song(self, tim_file: Path) -> Song | None:
         fseq_dir = self.vixen_dir / 'Export'
@@ -37,15 +36,15 @@ class VixenScanner:
             fseq_file=fseq_file
         )
 
-    def scan(self) -> None:
+    def scan(self) -> list[Song]:
         seq_dir = self.vixen_dir / 'Sequence'
-        # use walrus operator to create flatmap within list creation
-        self.songs = [
+        # use walrus operator to create flatmap within list comprehension
+        return [
             song for tim_file in seq_dir.glob('[!.]*.tim')
             if (song := self._create_song(tim_file))
         ]
 
 
 if __name__ == '__main__':
-    scanner = VixenScanner('/Volumes/USBX/Vixen 3')
+    scanner = VixenScanner(DEBUG_VIXEN_DIR)
     scanner.scan()

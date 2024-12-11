@@ -1,13 +1,12 @@
 import struct
 from pathlib import Path
 
-from constants import NUM_BYTES_L, NUM_BYTES_R
+from common import Song, NUM_BYTES_L, NUM_BYTES_R, DEBUG_VIXEN_DIR
 from fseq_parser import FSEQParser
-from objects import Song
 from vixen_scanner import VixenScanner
 
 
-class ShowFileGenerator:
+class _ShowFileGenerator:
     def __init__(self, bytes_left: int, bytes_right: int, frame_delay_ms: int):
         if bytes_left % 3 != 0:
             raise ValueError('Bytes for left side must be divisible by 3 to represent RGB values.')
@@ -29,7 +28,7 @@ class ShowFileGenerator:
         self.left_frames.append(left_frame)
         self.right_frames.append(right_frame)
 
-    def write_to_file(self, output_filename: str) -> None:
+    def write_to_file(self, output_filename: str) -> Path:
         assert len(self.left_frames) == len(self.right_frames), \
             'Left and right frame lists must have the same number of frames.'
 
@@ -44,25 +43,26 @@ class ShowFileGenerator:
                     r, g, b = right_frame[i], right_frame[i + 1], right_frame[i + 2]
                     f.write(struct.pack('I', (r << 16) | (g << 8) | b))
 
-        print(f'Show file created at "{output_path}"')
+        return output_path
 
 
-def generate_show_file(song: Song):
+def generate_show_file(song: Song) -> Path:
+    # parse the song file using FSEQParser and create a _ShowFileGenerator
     parser = FSEQParser(song.fseq_file)
-    show_generator = ShowFileGenerator(
+    show_generator = _ShowFileGenerator(
         NUM_BYTES_L,
         NUM_BYTES_R,
         parser.step_time_in_ms
     )
 
+    # iterate over frames of the song, adding to the _ShowFileGenerator each time
     for frame in parser.iter_frames():
         show_generator.add_frame(frame.light_strip_l_bytes, frame.light_strip_r_bytes)
 
-    show_generator.write_to_file(song.title)
+    # write the show file to disk and return the Path object of the file
+    return show_generator.write_to_file(song.title)
 
 
 if __name__ == '__main__':
-    scanner = VixenScanner('/Volumes/USBX/Vixen 3')
-    scanner.scan()
-    for song in scanner.songs:
-        generate_show_file(song)
+    all_songs = VixenScanner(DEBUG_VIXEN_DIR).scan()
+    all_show_files = [generate_show_file(song) for song in all_songs]

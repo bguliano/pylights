@@ -3,7 +3,7 @@ from typing import Generator
 
 import zstandard as zstd
 
-from objects import FSEQFrame
+from common import FSEQFrame, DEBUG_VIXEN_SAMPLE_FSEQ_PATH
 
 
 class ParserError(Exception):
@@ -25,8 +25,8 @@ def compression_type_from_num(n: int) -> str:
 
 
 class FSEQParser:
-    def __init__(self, file: Path):
-        self.file = file.open('rb')
+    def __init__(self, filepath: Path):
+        self.file = filepath.open('rb')
 
         magic = self.file.read(4)
         if magic != b'PSEQ':
@@ -119,11 +119,11 @@ class FSEQParser:
         self.file.seek(offset, 0)
 
         if self.compression_type == 'zstd':
-            dctx = zstd.ZstdDecompressor()
+            decompressor = zstd.ZstdDecompressor()
 
             length = self.frame_offsets[current_block + 1][1] - self.frame_offsets[current_block][1]
             block = self.file.read(length)
-            block = dctx.stream_reader(block).readall()
+            block = decompressor.stream_reader(block).readall()
 
             fidx = (frame_index - self.frame_offsets[current_block][0]) * self.channel_count_per_frame
         else:
@@ -142,5 +142,4 @@ class FSEQParser:
 
 
 if __name__ == '__main__':
-    fseq_file = Path('/Volumes/USBX/Vixen 3/Export/Carey Grinch.fseq')
-    parser = FSEQParser(fseq_file)
+    parser = FSEQParser(DEBUG_VIXEN_SAMPLE_FSEQ_PATH)
