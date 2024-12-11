@@ -33,8 +33,8 @@ class VixenScanner:
         # then, create the Song object and return it
         return Song(
             path=tim_file,
-            mp3_file=mp3_dir / mp3_filename,
-            fseq_file=fseq_dir / (tim_file.stem + '.fseq')
+            mp3_file=mp3_file,
+            fseq_file=fseq_file
         )
 
     def scan(self) -> None:
