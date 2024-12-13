@@ -18,6 +18,10 @@ class _ZeroClient(Connection):
         )
 
 
+_ZERO_IP = _ZeroClient.ip
+_ZERO_PORT = 12345
+
+
 class LEDServerCommand(StrEnum):
     PLAY = 'PLAY'
     PAUSE = 'PAUSE'
@@ -49,11 +53,20 @@ def start_led_server(show_file: Path) -> None:
 def send_led_server_command(command: LEDServerCommand) -> None:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((_ZeroClient.ip, 12345))
+            s.connect((_ZERO_IP, _ZERO_PORT))
             s.sendall(command.encode())
             print(f'Subcommand "{command}" sent successfully.')
     except ConnectionRefusedError:
         print('Could not connect to led_server. Ensure it is running.')
+
+
+def check_led_server_running() -> bool:
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((_ZERO_IP, _ZERO_PORT))
+            return True
+    except ConnectionRefusedError:
+        return False
 
 
 if __name__ == '__main__':

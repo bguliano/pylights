@@ -25,8 +25,8 @@ def compression_type_from_num(n: int) -> str:
 
 
 class FSEQParser:
-    def __init__(self, filepath: Path):
-        self.file = filepath.open('rb')
+    def __init__(self, fseq_file: Path):
+        self.file = fseq_file.open('rb')
 
         magic = self.file.read(4)
         if magic != b'PSEQ':

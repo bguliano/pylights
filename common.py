@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-import gpiozero
-
 # ---- Constants ---------------------------------------------------------------------------------
 
 NUM_LEDS_L = 554
@@ -32,6 +30,11 @@ class Song:
     def title(self) -> str:
         return self.path.stem
 
+    @property
+    def show_file(self) -> Path:
+        # this is an assumed path, it does not necessarily exist when the Song object is created
+        return (Path('shows') / self.title).with_suffix('.show')
+
 
 @dataclass
 class FSEQFrame:
@@ -51,18 +54,6 @@ class FSEQFrame:
         self.relay_bytes = self.raw_bytes[:NUM_BYTES_RELAYS]
         self.light_strip_l_bytes = self.raw_bytes[NUM_BYTES_RELAYS:NUM_BYTES_RELAYS + NUM_BYTES_L]
         self.light_strip_r_bytes = self.raw_bytes[NUM_BYTES_RELAYS + NUM_BYTES_L:]
-
-
-@dataclass
-class Light:
-    name: str
-    gpio: gpiozero.LED
-
-
-@dataclass
-class Preset:
-    name: str
-    light_names: list[str]
 
 
 # ------------------------------------------------------------------------------------------------

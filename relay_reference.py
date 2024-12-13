@@ -1,27 +1,44 @@
 import json
 from pathlib import Path
+from typing import TypeAlias, Iterable
 
 import gpiozero
 
+Relay: TypeAlias = gpiozero.LED
+RelayMapping: TypeAlias = dict[str, Relay]
+
 
 class RelayReference:
-    RR_RELAYS_CONFIG_PATH = Path('config/rr_relays.json')
-    RR_MAPPING_CONFIG_PATH = Path('config/rr_mapping.json')
+    CONFIG_PATH = Path('config/rr_mapping.json')
 
     def __init__(self):
-        self.relays: list[gpiozero.LED] = []
-        self.mapping: dict[str, int] = {}
+        self.mapping: RelayMapping = {}
         self.reload()
 
     def reload(self):
-        relays_json = json.loads(self.RR_RELAYS_CONFIG_PATH.read_text())
-        mapping_json = json.loads(self.RR_MAPPING_CONFIG_PATH.read_text())
+        # close all gpiozero.LED connections if they exist
+        if len(self.mapping) > 0:
+            for relay in self.mapping.values():
+                relay.close()
 
-        self.relays = [gpiozero.LED(pin) for pin in relays_json]
-        self.mapping = mapping_json
+        mapping_json = json.loads(self.CONFIG_PATH.read_text())
+        self.mapping = {
+            key: gpiozero.LED(value)
+            for key, value in mapping_json.items()
+        }
 
-    def get_relay_from_name(self, name: str) -> gpiozero.LED:
-        return self.relays[self.mapping[name]]
+    @property
+    def relays(self) -> Iterable[Relay]:
+        return self.mapping.values()
+
+    def all_off(self) -> None:
+        for relay in self.mapping.values():
+            relay.off()
+
+    def all_on(self) -> None:
+        for relay in self.mapping.values():
+            relay.on()
 
 
-relay_reference = RelayReference()
+# for some reason, this static type declaration is necessary for global singletons...
+relay_reference: RelayReference = RelayReference()

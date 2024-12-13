@@ -64,5 +64,5 @@ def generate_show_file(song: Song) -> Path:
 
 
 if __name__ == '__main__':
-    all_songs = VixenScanner(DEBUG_VIXEN_DIR).scan()
-    all_show_files = [generate_show_file(song) for song in all_songs]
+    song_dict = VixenScanner(DEBUG_VIXEN_DIR).scan()
+    all_show_files = [generate_show_file(song) for song in song_dict.values()]

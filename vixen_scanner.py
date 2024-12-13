@@ -36,13 +36,13 @@ class VixenScanner:
             fseq_file=fseq_file
         )
 
-    def scan(self) -> list[Song]:
+    def scan(self) -> dict[str, Song]:
         seq_dir = self.vixen_dir / 'Sequence'
-        # use walrus operator to create flatmap within list comprehension
-        return [
-            song for tim_file in seq_dir.glob('[!.]*.tim')
+        # use walrus operator to create flatmap within dict comprehension
+        return {
+            song.title: song for tim_file in seq_dir.glob('[!.]*.tim')
             if (song := self._create_song(tim_file))
-        ]
+        }
 
 
 if __name__ == '__main__':
