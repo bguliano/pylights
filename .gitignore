@@ -243,3 +243,4 @@ cython_debug/
 
 shows/
 Vixen 3/
+led_state.json
