@@ -10,7 +10,7 @@ import psutil
 import pygame
 
 from common import Song, VIXEN_DIR, SongsDescriptor, SongDescriptor, LightsDescriptor, \
-    LightDescriptor, PresetsDescriptor, PresetDescriptor, RemapDescriptor, DeveloperDescriptor, VERSION
+    LightDescriptor, PresetsDescriptor, PresetDescriptor, RemapDescriptor, DeveloperDescriptor, VERSION, InfoDescriptor
 from fseq_parser import FSEQParser
 from relay_reference import relay_reference, Relay
 from show_file_generator import generate_all_show_files
@@ -19,7 +19,7 @@ from zero_manager import upload_shows, start_led_server, send_led_server_command
     check_led_server_running, get_led_server_ip
 
 
-class _ControllerModule(ABC):
+class _ImplementsGetInfo(ABC):
     @abstractmethod
     def get_info(self) -> None:
         pass
@@ -28,7 +28,7 @@ class _ControllerModule(ABC):
 # ------------------------------------------------------------------------------------------------
 
 
-class _SongsController(_ControllerModule):
+class _SongsController(_ImplementsGetInfo):
     def __init__(self, vixen_dir: Path):
         self.songs = SongScanner(vixen_dir).scan()
 
@@ -138,7 +138,7 @@ class _SongsController(_ControllerModule):
         )
 
 
-class _LightsController(_ControllerModule):
+class _LightsController(_ImplementsGetInfo):
     def all_on(self) -> LightsDescriptor:
         relay_reference.all_on()
 
@@ -173,7 +173,7 @@ class _LightsController(_ControllerModule):
         )
 
 
-class _PresetController(_ControllerModule):
+class _PresetController(_ImplementsGetInfo):
     CONFIG_PATH = Path('config/presets.json')
 
     def __init__(self):
@@ -222,7 +222,7 @@ class RemapNameDoesNotExist(Exception):
         super().__init__(f'No light found with name: {name}')
 
 
-class _RemapController(_ControllerModule):
+class _RemapController(_ImplementsGetInfo):
     def __init__(self):
         self.remap: dict[str, int | None] | None = None
         self.relay_iterator: Iterator | None = None
@@ -291,7 +291,7 @@ class _RemapController(_ControllerModule):
         )
 
 
-class _DeveloperController(_ControllerModule):
+class _DeveloperController(_ImplementsGetInfo):
     def __init__(self, vixen_dir: Path):
         self.vixen_dir = vixen_dir
 
@@ -328,7 +328,7 @@ class _DeveloperController(_ControllerModule):
 # ------------------------------------------------------------------------------------------------
 
 
-class PylightsController:
+class PylightsController(_ImplementsGetInfo):
     def __init__(self, vixen_dir: str):
         self.vixen_dir = Path(vixen_dir)
 
@@ -338,6 +338,13 @@ class PylightsController:
         self.presets = _PresetController()
         self.remap = _RemapController()
         self.developer = _DeveloperController(self.vixen_dir)
+
+    def get_info(self) -> InfoDescriptor:
+        return InfoDescriptor(
+            songs=self.songs.get_info(),
+            lights=self.lights.get_info(),
+            presets=self.presets.get_info()
+        )
 
 
 # ------------------------------------------------------------------------------------------------

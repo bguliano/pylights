@@ -165,11 +165,8 @@ def developer_info() -> tuple[Response, int]:
 
 @app.route(f'{BASE_ENDPOINT}/info')
 def info() -> tuple[Response, int]:
-    return jsonify({
-        'songs': controller.songs.get_info(),
-        'lights': controller.lights.get_info(),
-        'presets': controller.presets.get_info(),
-    }), 200
+    descriptor = controller.get_info()
+    return jsonify(descriptor), 200
 
 
 # ------------------------------------------------------------------------------------------------

@@ -111,6 +111,13 @@ class DeveloperDescriptor:
     led_server_status: bool
 
 
+@dataclass
+class InfoDescriptor:
+    songs: SongsDescriptor
+    lights: LightsDescriptor
+    presets: PresetsDescriptor
+
+
 # ------------------------------------------------------------------------------------------------
 
 
