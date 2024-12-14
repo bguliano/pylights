@@ -1,32 +1,32 @@
 {
   "All white": [
-    "white bottom",
-    "white middle",
-    "white top",
-    "star"
+    "White Bottom",
+    "White Middle",
+    "White Top",
+    "Star"
   ],
   "All white with mini trees": [
-    "white bottom",
-    "white middle",
-    "white top",
-    "star",
-    "mini tree l",
-    "mini tree r"
+    "White Bottom",
+    "White Middle",
+    "White Top",
+    "Star",
+    "Mini Tree L",
+    "Mini Tree R"
   ],
   "All color": [
-    "color bottom",
-    "color middle",
-    "color top",
-    "large bulbs"
+    "Color Bottom",
+    "Color Middle",
+    "Color Top",
+    "Large Bulbs"
   ],
   "Whole tree": [
-    "white bottom",
-    "white middle",
-    "white top",
-    "color bottom",
-    "color middle",
-    "color top",
-    "large bulbs",
-    "star"
+    "White Bottom",
+    "White Middle",
+    "White Top",
+    "Color Bottom",
+    "Color Middle",
+    "Color Top",
+    "Large Bulbs",
+    "Star"
   ]
 }
