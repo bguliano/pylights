@@ -6,19 +6,21 @@ from fabric import Connection
 from humanize import naturalsize
 
 
-class _ZeroClient(Connection):
-    ip = socket.gethostbyname('pylightszero.local')
+def get_led_server_ip() -> str:
+    return socket.gethostbyname('pylightszero.local')
 
+
+class _ZeroClient(Connection):
     def __init__(self):
         ssh_key_file = Path('~/.ssh/pylightszero_key').expanduser()
         super().__init__(
-            host=self.ip,
+            host=get_led_server_ip(),
             user='pylightszero',
             connect_kwargs={'key_filename': str(ssh_key_file)}
         )
 
 
-_ZERO_IP = _ZeroClient.ip
+_ZERO_IP = get_led_server_ip()
 _ZERO_PORT = 12345
 
 

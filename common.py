@@ -3,6 +3,8 @@ from pathlib import Path
 
 # ---- Constants ---------------------------------------------------------------------------------
 
+VERSION = 'alpha-0.1'
+
 NUM_LEDS_L = 554
 NUM_LEDS_R = 563
 
@@ -11,7 +13,7 @@ NUM_BYTES_L = NUM_LEDS_L * 3
 NUM_BYTES_R = NUM_LEDS_R * 3
 NUM_BYTES_TOTAL = NUM_BYTES_RELAYS + NUM_BYTES_L + NUM_BYTES_R
 
-DEBUG_VIXEN_DIR = Path('Vixen 3')
+VIXEN_DIR = Path('Vixen 3')
 DEBUG_VIXEN_SAMPLE_FSEQ_PATH = Path('Vixen 3/Export/Carey Grinch.fseq')
 
 
@@ -22,13 +24,13 @@ DEBUG_VIXEN_SAMPLE_FSEQ_PATH = Path('Vixen 3/Export/Carey Grinch.fseq')
 
 @dataclass
 class Song:
-    path: Path
+    title: str
+    tim_file: Path
     mp3_file: Path
     fseq_file: Path
-
-    @property
-    def title(self) -> str:
-        return self.path.stem
+    artist: str
+    album_art: str
+    length_ms: float
 
     @property
     def show_file(self) -> Path:
@@ -54,6 +56,59 @@ class FSEQFrame:
         self.relay_bytes = self.raw_bytes[:NUM_BYTES_RELAYS]
         self.light_strip_l_bytes = self.raw_bytes[NUM_BYTES_RELAYS:NUM_BYTES_RELAYS + NUM_BYTES_L]
         self.light_strip_r_bytes = self.raw_bytes[NUM_BYTES_RELAYS + NUM_BYTES_L:]
+
+
+@dataclass
+class SongDescriptor:
+    title: str
+    artist: str
+    album_art: str
+    length_ms: float
+
+
+@dataclass
+class SongsDescriptor:
+    songs: list[SongDescriptor]
+    playing: SongDescriptor | None
+    current_time_ms: float
+    volume: float
+
+
+@dataclass
+class LightDescriptor:
+    name: str
+    gpio: int
+    value: bool
+
+
+@dataclass
+class LightsDescriptor:
+    lights: list[LightDescriptor]
+
+
+@dataclass
+class PresetDescriptor:
+    name: str
+    lights: list[str]
+
+
+@dataclass
+class PresetsDescriptor:
+    presets: list[PresetDescriptor]
+
+
+@dataclass
+class RemapDescriptor:
+    remaining: list[str] | None
+
+
+@dataclass
+class DeveloperDescriptor:
+    version: str
+    ip_address: str
+    cpu_usage: float
+    led_server_ip_address: str
+    led_server_status: bool
 
 
 # ------------------------------------------------------------------------------------------------

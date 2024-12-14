@@ -1,9 +1,9 @@
 import struct
 from pathlib import Path
 
-from common import Song, NUM_BYTES_L, NUM_BYTES_R, DEBUG_VIXEN_DIR
+from common import Song, NUM_BYTES_L, NUM_BYTES_R, VIXEN_DIR
 from fseq_parser import FSEQParser
-from vixen_scanner import VixenScanner
+from song_scanner import SongScanner
 
 
 class _ShowFileGenerator:
@@ -63,6 +63,9 @@ def generate_show_file(song: Song) -> Path:
     return show_generator.write_to_file(song.title)
 
 
+def generate_all_show_files() -> list[Path]:
+    return [generate_show_file(song) for song in SongScanner(VIXEN_DIR).scan().values()]
+
+
 if __name__ == '__main__':
-    song_dict = VixenScanner(DEBUG_VIXEN_DIR).scan()
-    all_show_files = [generate_show_file(song) for song in song_dict.values()]
+    generate_all_show_files()

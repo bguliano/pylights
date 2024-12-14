@@ -1,19 +1,22 @@
 import json
+import socket
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Thread, Event
 from typing import Iterator
 
 import mutagen.mp3
+import psutil
 import pygame
 
-from common import Song, print_progress, print_done, DEBUG_VIXEN_DIR
+from common import Song, VIXEN_DIR, SongsDescriptor, SongDescriptor, LightsDescriptor, \
+    LightDescriptor, PresetsDescriptor, PresetDescriptor, RemapDescriptor, DeveloperDescriptor, VERSION
 from fseq_parser import FSEQParser
 from relay_reference import relay_reference, Relay
-from show_file_generator import generate_show_file
-from vixen_scanner import VixenScanner
+from show_file_generator import generate_all_show_files
+from song_scanner import SongScanner
 from zero_manager import upload_shows, start_led_server, send_led_server_command, LEDServerCommand, \
-    check_led_server_running
+    check_led_server_running, get_led_server_ip
 
 
 class _ControllerModule(ABC):
@@ -27,9 +30,10 @@ class _ControllerModule(ABC):
 
 class _SongsController(_ControllerModule):
     def __init__(self, vixen_dir: Path):
-        self.songs = VixenScanner(vixen_dir).scan()
+        self.songs = SongScanner(vixen_dir).scan()
 
         pygame.mixer.init()
+        self.current_song: Song | None = None
         self.song_thread: Thread | None = None
         self.song_thread_stop = Event()
 
@@ -42,30 +46,26 @@ class _SongsController(_ControllerModule):
             for relay_byte, relay in zip(data.relay_bytes, relay_reference.relays):
                 relay.value = bool(relay_byte)
 
-    @property
-    def playing(self) -> bool:
-        # perform two checks to ensure we are or are not playing
-        return pygame.mixer.music.get_busy() or check_led_server_running()
-
-    def play(self, song_name: str) -> None:
+    def play(self, song_name: str) -> SongsDescriptor:
         # if a song is already playing, stop it
-        if self.playing:
+        if self.current_song is not None:
             self.stop()
 
         # get Song object
         song = self.songs[song_name]
+        self.current_song = song
 
         # start loading the show on the pi zero
         start_led_server(song.show_file)
 
         # reset pygame.mixer to allow for frequency change
-        old_volume = self.get_volume()
+        old_volume = self.volume
         pygame.mixer.quit()
 
         # init pygame.mixer using mp3 file's frequency and set its volume back to what it was before
         freq = mutagen.mp3.MP3(song.mp3_file).info.sample_rate
         pygame.mixer.init(frequency=freq)
-        self.set_volume(old_volume)
+        self.volume = old_volume
 
         # finally, load the mp3 file and play
         pygame.mixer.music.load(song.mp3_file)
@@ -75,53 +75,102 @@ class _SongsController(_ControllerModule):
         self.song_thread.start()
         send_led_server_command(LEDServerCommand.PLAY)
 
-    def pause(self) -> None:
+        return self.get_info()
+
+    def pause(self) -> SongsDescriptor:
         pygame.mixer.music.pause()
         send_led_server_command(LEDServerCommand.PAUSE)
 
-    def resume(self) -> None:
+        return self.get_info()
+
+    def resume(self) -> SongsDescriptor:
         pygame.mixer.music.unpause()
         send_led_server_command(LEDServerCommand.RESUME)
 
-    def stop(self) -> None:
+        return self.get_info()
+
+    def stop(self) -> SongsDescriptor:
+        self.current_song = None
         pygame.mixer.music.stop()
         send_led_server_command(LEDServerCommand.STOP)  # will automatically turn off LED strips
         self.song_thread_stop.set()
         self.song_thread.join()
         relay_reference.all_off()
 
-    def set_volume(self, volume: float) -> None:
-        if volume < 0.0 or volume > 1.0:
-            print(f'Invalid volume: {volume}, it will be ignored')
-            return
+        return self.get_info()
 
-        pygame.mixer.music.set_volume(volume)
+    @property
+    def current_time_ms(self) -> int:
+        return pygame.mixer.music.get_pos()
 
-    def get_volume(self) -> float:
+    @property
+    def volume(self) -> float:
         return pygame.mixer.music.get_volume()
 
-    def get_info(self) -> None:
-        pass
+    @volume.setter
+    def volume(self, value: float) -> None:
+        if value < 0.0 or value > 1.0:
+            print(f'Invalid volume: {value}, it will be ignored')
+            return
+
+        pygame.mixer.music.set_volume(value)
+
+    @staticmethod
+    def _song_to_song_descriptor(song: Song) -> SongDescriptor:
+        return SongDescriptor(
+            title=song.title,
+            artist=song.artist,
+            album_art=song.album_art,
+            length_ms=song.length_ms
+        )
+
+    def get_info(self) -> SongsDescriptor:
+        if self.current_song is None:
+            playing = None
+        else:
+            playing = self._song_to_song_descriptor(self.current_song)
+
+        return SongsDescriptor(
+            songs=[self._song_to_song_descriptor(song) for song in self.songs.values()],
+            playing=playing,
+            current_time_ms=self.current_time_ms,
+            volume=self.volume
+        )
 
 
 class _LightsController(_ControllerModule):
-    def all_on(self) -> None:
+    def all_on(self) -> LightsDescriptor:
         relay_reference.all_on()
 
-    def all_off(self) -> None:
+        return self.get_info()
+
+    def all_off(self) -> LightsDescriptor:
         relay_reference.all_off()
 
-    def turn_on(self, light_name: str) -> None:
+        return self.get_info()
+
+    def turn_on(self, light_name: str) -> LightsDescriptor:
         relay_reference.mapping[light_name].on()
 
-    def turn_off(self, light_name: str) -> None:
+        return self.get_info()
+
+    def turn_off(self, light_name: str) -> LightsDescriptor:
         relay_reference.mapping[light_name].off()
 
-    def toggle(self, light_name: str) -> None:
+        return self.get_info()
+
+    def toggle(self, light_name: str) -> LightsDescriptor:
         relay_reference.mapping[light_name].toggle()
 
-    def get_info(self) -> None:
-        pass
+        return self.get_info()
+
+    def get_info(self) -> LightsDescriptor:
+        return LightsDescriptor(
+            lights=[
+                LightDescriptor(name=name, gpio=relay.pin.number, value=relay.value)
+                for name, relay in relay_reference.mapping.items()
+            ]
+        )
 
 
 class _PresetController(_ControllerModule):
@@ -133,7 +182,7 @@ class _PresetController(_ControllerModule):
     def _save(self) -> None:
         self.CONFIG_PATH.write_text(json.dumps(self.presets))
 
-    def activate(self, preset_name: str) -> None:
+    def activate(self, preset_name: str) -> PresetsDescriptor:
         light_names = self.presets[preset_name]
 
         # turn off all relays and turn on only the lights in the preset
@@ -141,12 +190,21 @@ class _PresetController(_ControllerModule):
         for light_name in light_names:
             relay_reference.mapping[light_name].on()
 
-    def add_preset(self, preset_name: str, light_names: list[str]) -> None:
+        return self.get_info()
+
+    def add(self, preset_name: str, light_names: list[str]) -> PresetsDescriptor:
         self.presets[preset_name] = light_names
         self._save()
 
-    def get_info(self) -> None:
-        pass
+        return self.get_info()
+
+    def get_info(self) -> PresetsDescriptor:
+        return PresetsDescriptor(
+            presets=[
+                PresetDescriptor(name=name, lights=light_names)
+                for name, light_names in self.presets.items()
+            ]
+        )
 
 
 class RemapAlreadyStarted(Exception):
@@ -170,7 +228,7 @@ class _RemapController(_ControllerModule):
         self.relay_iterator: Iterator | None = None
         self.current_relay: Relay | None = None
 
-    def start(self) -> None:
+    def start(self) -> RemapDescriptor:
         if self.remap is not None:
             raise RemapAlreadyStarted()
 
@@ -186,7 +244,9 @@ class _RemapController(_ControllerModule):
         self.current_relay = next(self.relay_iterator)
         self.current_relay.on()
 
-    def next(self, assign_light_name: str) -> bool:
+        return self.get_info()
+
+    def next(self, assign_light_name: str) -> RemapDescriptor:
         if assign_light_name not in relay_reference.mapping:
             raise RemapNameDoesNotExist(assign_light_name)
 
@@ -198,13 +258,15 @@ class _RemapController(_ControllerModule):
         try:
             self.current_relay = next(self.relay_iterator)
             self.current_relay.on()
-            return True
         except StopIteration:
             self._stop()
-            return False
 
-    def cancel(self) -> None:
+        return self.get_info()
+
+    def cancel(self) -> RemapDescriptor:
         self._stop()
+
+        return self.get_info()
 
     def _stop(self) -> None:
         self.relay_iterator = None
@@ -218,29 +280,55 @@ class _RemapController(_ControllerModule):
 
         self.remap = None
 
-    def get_info(self) -> None:
-        pass
+    def get_info(self) -> RemapDescriptor:
+        if self.remap is None:
+            remaining = None
+        else:
+            remaining = [key for key, value in self.remap.items() if value is None]
+
+        return RemapDescriptor(
+            remaining=remaining
+        )
 
 
 class _DeveloperController(_ControllerModule):
     def __init__(self, vixen_dir: Path):
         self.vixen_dir = vixen_dir
 
-    def recompile_shows(self) -> None:
-        print_progress('Scanning vixen_dir for all songs...')
-        song_dict = VixenScanner(self.vixen_dir).scan()
-        all_show_files = [generate_show_file(song) for song in song_dict.values()]
+    def recompile_shows(self) -> DeveloperDescriptor:
+        all_show_files = generate_all_show_files()
         upload_shows(all_show_files)
-        print_done()
 
-    def get_info(self) -> None:
-        pass
+        return self.get_info()
+
+    def info(self) -> DeveloperDescriptor:
+        return self.get_info()
+
+    def get_info(self) -> DeveloperDescriptor:
+        def get_ip() -> str:
+            try:
+                # Establish a temporary connection to a known external host
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                    # Connecting to an external server (Google DNS server here)
+                    s.connect(("8.8.8.8", 80))
+                    local_ip = s.getsockname()[0]
+                return local_ip
+            except Exception as e:
+                return f"Unable to determine IP: {e}"
+
+        return DeveloperDescriptor(
+            version=VERSION,
+            ip_address=get_ip(),
+            cpu_usage=psutil.cpu_percent(1),
+            led_server_ip_address=get_led_server_ip(),
+            led_server_status=check_led_server_running()
+        )
 
 
 # ------------------------------------------------------------------------------------------------
 
 
-class Controller:
+class PylightsController:
     def __init__(self, vixen_dir: str):
         self.vixen_dir = Path(vixen_dir)
 
@@ -255,4 +343,4 @@ class Controller:
 # ------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    c = Controller(DEBUG_VIXEN_DIR)
+    c = PylightsController(VIXEN_DIR)

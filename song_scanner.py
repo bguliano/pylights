@@ -1,10 +1,14 @@
+import base64
+import json
 import re
 from pathlib import Path
 
-from common import Song, DEBUG_VIXEN_DIR
+import mutagen.mp3
+
+from common import Song, VIXEN_DIR
 
 
-class VixenScanner:
+class SongScanner:
     def __init__(self, vixen_dir: Path):
         self.vixen_dir = vixen_dir
         assert self.vixen_dir.exists()
@@ -29,11 +33,36 @@ class VixenScanner:
         if not (fseq_file := fseq_dir / (tim_file.stem + '.fseq')).exists():
             return None
 
+        # get song info path for extracting metadata and image
+        song_info_path = Path('song_info')
+        title = tim_file.stem
+
+        # get artist and other metadata if available
+        metadata_file = (song_info_path / title).with_suffix('.json')
+        if metadata_file.exists():
+            artist = json.loads(metadata_file.read_text()).get('artist')
+        else:
+            artist = 'Unknown Artist'
+
+        # get album art if available
+        image_file = (song_info_path / title).with_suffix('.jpg')
+        if image_file.exists():
+            album_art = base64.b64encode(image_file.read_bytes()).decode('utf-8')
+        else:
+            album_art = ''
+
+        # get length of the song
+        length = mutagen.mp3.MP3(mp3_file).info.length * 1000
+
         # then, create the Song object and return it
         return Song(
-            path=tim_file,
+            title=title,
+            tim_file=tim_file,
             mp3_file=mp3_file,
-            fseq_file=fseq_file
+            fseq_file=fseq_file,
+            artist=artist,
+            album_art=album_art,
+            length_ms=length
         )
 
     def scan(self) -> dict[str, Song]:
@@ -46,5 +75,4 @@ class VixenScanner:
 
 
 if __name__ == '__main__':
-    scanner = VixenScanner(DEBUG_VIXEN_DIR)
-    scanner.scan()
+    song_dict = SongScanner(VIXEN_DIR).scan()

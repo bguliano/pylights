@@ -5,3 +5,4 @@ pygame~=2.6.1
 zstandard~=0.23.0
 fabric~=3.2.2
 humanize~=4.11.0
+psutil~=6.1.0
