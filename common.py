@@ -17,7 +17,10 @@ NUM_BYTES_TOTAL = NUM_BYTES_RELAYS + NUM_BYTES_L + NUM_BYTES_R
 VIXEN_DIR = Path('Vixen 3')
 DEBUG_VIXEN_SAMPLE_FSEQ_PATH = Path('Vixen 3/Export/Carey Grinch.fseq')
 
-ZERO_IP = socket.gethostbyname('pylightszero.local')
+try:
+    ZERO_IP = socket.gethostbyname('pylightszero.local')
+except socket.gaierror:
+    ZERO_IP = ''
 ZERO_PORT = 12345
 
 
@@ -74,8 +77,9 @@ class SongDescriptor:
 class SongsDescriptor:
     songs: list[SongDescriptor]
     playing: SongDescriptor | None
+    paused: bool
     current_time_ms: float
-    volume: float
+    volume: int  # 0-100
 
 
 @dataclass

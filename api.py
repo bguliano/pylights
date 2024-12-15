@@ -58,6 +58,20 @@ def songs_stop() -> tuple[Response, int]:
     return jsonify(descriptor), 200
 
 
+@app.route(f'{BASE_ENDPOINT}/songs/volume')
+def songs_volume() -> tuple[Response, int]:
+    volume = request.args.get('value', type=int)
+
+    if volume is None:
+        return jsonify({'error': 'The "value" query parameter is required.'}), 400
+    if volume < 0 or volume > 100:
+        return jsonify({'error': 'Invalid volume: {volume}, it must be between 0 and 100.'}), 400
+
+    controller.songs.volume = volume
+    descriptor = controller.songs.get_info()
+    return jsonify(descriptor), 200
+
+
 @app.route(f'{BASE_ENDPOINT}/lights/all-on')
 def lights_all_on() -> tuple[Response, int]:
     descriptor = controller.lights.all_on()

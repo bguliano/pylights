@@ -38,6 +38,7 @@ class _SongsController(_ImplementsGetInfo):
         self.current_song: Song | None = None
         self.song_thread: Thread | None = None
         self.song_thread_stop = Event()
+        self.paused = True
 
     def _threaded_relay_play(self, song: Song):
         parser = FSEQParser(song.fseq_file)
@@ -47,6 +48,11 @@ class _SongsController(_ImplementsGetInfo):
             assert len(data.relay_bytes) == len(relay_reference.mapping)
             for relay_byte, relay in zip(data.relay_bytes, relay_reference.relays):
                 relay.value = bool(relay_byte)
+            if not pygame.mixer.music.get_busy() and not self.paused:
+                # this means the audio file has ended, so stop this thread from another thread
+                # set the thread so that it doesn't call stop again
+                self.song_thread_stop.set()
+                Thread(target=self.stop).start()
 
     def play(self, song_name: str) -> SongsDescriptor:
         # if a song is already playing, stop it
@@ -73,29 +79,33 @@ class _SongsController(_ImplementsGetInfo):
         pygame.mixer.music.load(song.mp3_file)
         self.song_thread_stop.clear()
         self.song_thread = Thread(target=self._threaded_relay_play, args=(song,))
+        self.paused = False
 
         # wait for led_server to be ready (about 1 second) and play!
         time.sleep(1)
         send_led_server_command(LEDServerCommand.PLAY)
-        time.sleep(0.1)
+        time.sleep(0.1)  # 100ms sync with pygame
         pygame.mixer.music.play()
         self.song_thread.start()
 
         return self.get_info()
 
     def pause(self) -> SongsDescriptor:
+        self.paused = True
         pygame.mixer.music.pause()
         send_led_server_command(LEDServerCommand.PAUSE)
 
         return self.get_info()
 
     def resume(self) -> SongsDescriptor:
+        self.paused = False
         pygame.mixer.music.unpause()
         send_led_server_command(LEDServerCommand.RESUME)
 
         return self.get_info()
 
     def stop(self) -> SongsDescriptor:
+        self.paused = True
         self.current_song = None
         pygame.mixer.music.stop()
         send_led_server_command(LEDServerCommand.STOP)  # will automatically turn off LED strips
@@ -106,20 +116,16 @@ class _SongsController(_ImplementsGetInfo):
         return self.get_info()
 
     @property
-    def current_time_ms(self) -> int:
-        return pygame.mixer.music.get_pos()
-
-    @property
-    def volume(self) -> float:
-        return pygame.mixer.music.get_volume()
+    def volume(self) -> int:
+        return int(pygame.mixer.music.get_volume() * 100)
 
     @volume.setter
-    def volume(self, value: float) -> None:
-        if value < 0.0 or value > 1.0:
+    def volume(self, value: int) -> None:
+        if value < 0 or value > 100:
             print(f'Invalid volume: {value}, it will be ignored')
             return
 
-        pygame.mixer.music.set_volume(value)
+        pygame.mixer.music.set_volume(value / 100)
 
     @staticmethod
     def _song_to_song_descriptor(song: Song) -> SongDescriptor:
@@ -139,7 +145,8 @@ class _SongsController(_ImplementsGetInfo):
         return SongsDescriptor(
             songs=[self._song_to_song_descriptor(song) for song in self.songs.values()],
             playing=playing,
-            current_time_ms=self.current_time_ms,
+            paused=self.paused,
+            current_time_ms=max(0.0, pygame.mixer.music.get_pos()),
             volume=self.volume
         )
 

@@ -41,17 +41,19 @@ def upload_shows(show_files: list[Path]) -> None:
 def start_led_server(show_file: Path) -> None:
     cmd = f'sudo ./led_server "shows/{show_file.name}" &'
     print(f'Running command: {cmd}...', end='', flush=True)
-    with _ZeroClient() as zc:
-        zc.run(cmd, disown=True)
+    if ZERO_IP:  # ZERO_IP = '' when pi zero is offline
+        with _ZeroClient() as zc:
+            zc.run(cmd, disown=True)
     print('Done')
 
 
 def send_led_server_command(command: LEDServerCommand) -> None:
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((ZERO_IP, ZERO_PORT))
-            s.sendall(command.encode())
-            print(f'Subcommand "{command}" sent successfully.')
+        if ZERO_IP:  # ZERO_IP = '' when pi zero is offline
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((ZERO_IP, ZERO_PORT))
+                s.sendall(command.encode())
+        print(f'Subcommand "{command}" sent successfully.')
     except ConnectionRefusedError:
         print('Could not connect to led_server. Ensure it is running.')
 

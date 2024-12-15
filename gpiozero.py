@@ -32,8 +32,8 @@ from threading import Lock
 SYNC_FILE = Path("led_state.json")
 FILE_LOCK = Lock()
 
-# Initialize the file if it doesn't exist
-if not SYNC_FILE.exists():
+# Initialize the file if it doesn't exist or is blank
+if not SYNC_FILE.exists() or SYNC_FILE.read_text() == '':
     SYNC_FILE.write_text("{}")
 
 
