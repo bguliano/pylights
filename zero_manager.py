@@ -1,27 +1,22 @@
 import socket
+import time
 from enum import StrEnum
 from pathlib import Path
 
 from fabric import Connection
 from humanize import naturalsize
 
-
-def get_led_server_ip() -> str:
-    return socket.gethostbyname('pylightszero.local')
+from common import ZERO_IP, ZERO_PORT
 
 
 class _ZeroClient(Connection):
     def __init__(self):
         ssh_key_file = Path('~/.ssh/pylightszero_key').expanduser()
         super().__init__(
-            host=get_led_server_ip(),
+            host=ZERO_IP,
             user='pylightszero',
             connect_kwargs={'key_filename': str(ssh_key_file)}
         )
-
-
-_ZERO_IP = get_led_server_ip()
-_ZERO_PORT = 12345
 
 
 class LEDServerCommand(StrEnum):
@@ -55,7 +50,7 @@ def start_led_server(show_file: Path) -> None:
 def send_led_server_command(command: LEDServerCommand) -> None:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((_ZERO_IP, _ZERO_PORT))
+            s.connect((ZERO_IP, ZERO_PORT))
             s.sendall(command.encode())
             print(f'Subcommand "{command}" sent successfully.')
     except ConnectionRefusedError:
@@ -65,12 +60,17 @@ def send_led_server_command(command: LEDServerCommand) -> None:
 def check_led_server_running() -> bool:
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((_ZERO_IP, _ZERO_PORT))
+            s.connect((ZERO_IP, ZERO_PORT))
             return True
     except ConnectionRefusedError:
         return False
 
 
 if __name__ == '__main__':
-    upload_shows([Path('shows/Carol of the Bells.show')])
+    # upload_shows(list(Path('shows').glob('[!.]*.show')))
     # start_led_server(Path('shows/Carey Grinch.show'))
+    # start_led_server(Path('shows/Carol of the Bells (Lindsey Stirling).show'))
+    # # while not check_led_server_running():
+    # #     time.sleep(0.1)
+    # time.sleep(2)
+    send_led_server_command(LEDServerCommand.PLAY)

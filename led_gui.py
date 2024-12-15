@@ -64,4 +64,4 @@ def start_gui(update_interval_ms: int):
 
 if __name__ == "__main__":
     # Automatically start the GUI when the script is executed
-    start_gui(500)
+    start_gui(50)

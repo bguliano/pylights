@@ -1,3 +1,4 @@
+import socket
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -15,6 +16,9 @@ NUM_BYTES_TOTAL = NUM_BYTES_RELAYS + NUM_BYTES_L + NUM_BYTES_R
 
 VIXEN_DIR = Path('Vixen 3')
 DEBUG_VIXEN_SAMPLE_FSEQ_PATH = Path('Vixen 3/Export/Carey Grinch.fseq')
+
+ZERO_IP = socket.gethostbyname('pylightszero.local')
+ZERO_PORT = 12345
 
 
 # ------------------------------------------------------------------------------------------------

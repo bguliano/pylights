@@ -1,0 +1,12 @@
+to upload songs:
+rsync -ah --progress --exclude='.*' shows/ pylightszero:/home/pylightszero/shows
+
+to start led_server:
+sudo ./led_server "shows/Carey Grinch.show"
+
+to change c code:
+rm led_server.c && nano led_server.c
+./compile_led_server
+
+to check if led_server is running:
+ps -aux | grep "led_server"

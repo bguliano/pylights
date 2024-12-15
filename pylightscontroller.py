@@ -1,5 +1,6 @@
 import json
 import socket
+import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Thread, Event
@@ -10,13 +11,14 @@ import psutil
 import pygame
 
 from common import Song, VIXEN_DIR, SongsDescriptor, SongDescriptor, LightsDescriptor, \
-    LightDescriptor, PresetsDescriptor, PresetDescriptor, RemapDescriptor, DeveloperDescriptor, VERSION, InfoDescriptor
+    LightDescriptor, PresetsDescriptor, PresetDescriptor, RemapDescriptor, DeveloperDescriptor, VERSION, InfoDescriptor, \
+    ZERO_IP
 from fseq_parser import FSEQParser
 from relay_reference import relay_reference, Relay
 from show_file_generator import generate_all_show_files
 from song_scanner import SongScanner
 from zero_manager import upload_shows, start_led_server, send_led_server_command, LEDServerCommand, \
-    check_led_server_running, get_led_server_ip
+    check_led_server_running
 
 
 class _ImplementsGetInfo(ABC):
@@ -67,13 +69,17 @@ class _SongsController(_ImplementsGetInfo):
         pygame.mixer.init(frequency=freq)
         self.volume = old_volume
 
-        # finally, load the mp3 file and play
+        # prep the song to play
         pygame.mixer.music.load(song.mp3_file)
-        pygame.mixer.music.play()
         self.song_thread_stop.clear()
         self.song_thread = Thread(target=self._threaded_relay_play, args=(song,))
-        self.song_thread.start()
+
+        # wait for led_server to be ready (about 1 second) and play!
+        time.sleep(1)
         send_led_server_command(LEDServerCommand.PLAY)
+        time.sleep(0.1)
+        pygame.mixer.music.play()
+        self.song_thread.start()
 
         return self.get_info()
 
@@ -320,7 +326,7 @@ class _DeveloperController(_ImplementsGetInfo):
             version=VERSION,
             ip_address=get_ip(),
             cpu_usage=psutil.cpu_percent(1),
-            led_server_ip_address=get_led_server_ip(),
+            led_server_ip_address=ZERO_IP,
             led_server_status=check_led_server_running()
         )
 
