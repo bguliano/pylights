@@ -37,10 +37,14 @@ class SongScanner:
         song_info_path = Path('song_info')
         title = tim_file.stem
 
+        # if the song is marked as exclude, don't create a Song object
+        if (song_info_path / title).with_suffix('.exclude').exists():
+            return None
+
         # get artist and other metadata if available
-        metadata_file = (song_info_path / title).with_suffix('.json')
-        if metadata_file.exists():
-            artist = json.loads(metadata_file.read_text()).get('artist')
+        song_info_json = json.loads((song_info_path / 'song_info.json').read_text())
+        if metadata := song_info_json.get(title):
+            artist = metadata.get('artist') or 'Unknown Artist'
         else:
             artist = 'Unknown Artist'
 
