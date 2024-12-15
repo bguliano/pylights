@@ -1,7 +1,7 @@
 import struct
 from pathlib import Path
 
-from common import Song, NUM_BYTES_L, NUM_BYTES_R, VIXEN_DIR
+from common import Song, NUM_BYTES_L, NUM_BYTES_R, VIXEN_DIR, print_progress, print_done
 from fseq_parser import FSEQParser
 from song_scanner import SongScanner
 
@@ -47,6 +47,7 @@ class _ShowFileGenerator:
 
 
 def generate_show_file(song: Song) -> Path:
+    print_progress(f'Generating show file for "{song.title}"...')
     # parse the song file using FSEQParser and create a _ShowFileGenerator
     parser = FSEQParser(song.fseq_file)
     show_generator = _ShowFileGenerator(
@@ -60,6 +61,7 @@ def generate_show_file(song: Song) -> Path:
         show_generator.add_frame(frame.light_strip_l_bytes, frame.light_strip_r_bytes)
 
     # write the show file to disk and return the Path object of the file
+    print_done()
     return show_generator.write_to_file(song.title)
 
 
