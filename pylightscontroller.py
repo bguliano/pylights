@@ -220,16 +220,6 @@ class _PresetController(_ImplementsGetInfo):
         )
 
 
-class RemapAlreadyStarted(Exception):
-    def __init__(self):
-        super().__init__('Remap is already in progress. Use cancel_remap and try again.')
-
-
-class NoRemapInProgress(Exception):
-    def __init__(self):
-        super().__init__('There is no remap in progress. Use start_remap and try again.')
-
-
 class RemapNameDoesNotExist(Exception):
     def __init__(self, name: str):
         super().__init__(f'No light found with name: {name}')
@@ -243,7 +233,7 @@ class _RemapController(_ImplementsGetInfo):
 
     def start(self) -> RemapDescriptor:
         if self.remap is not None:
-            raise RemapAlreadyStarted()
+            self._stop()
 
         # init remap vars
         self.remap = {
@@ -277,13 +267,15 @@ class _RemapController(_ImplementsGetInfo):
         return self.get_info()
 
     def cancel(self) -> RemapDescriptor:
-        self._stop()
+        if self.remap is not None:
+            self._stop()
 
         return self.get_info()
 
     def _stop(self) -> None:
         self.relay_iterator = None
         self.current_relay = None
+        relay_reference.all_off()
 
         # save only if remap is complete
         if all(self.remap.values()):
@@ -309,8 +301,9 @@ class _DeveloperController(_ImplementsGetInfo):
         self.vixen_dir = vixen_dir
 
     def recompile_shows(self) -> DeveloperDescriptor:
-        all_show_files = generate_all_show_files()
-        upload_shows(all_show_files)
+        # all_show_files = generate_all_show_files()
+        # upload_shows(all_show_files)
+        time.sleep(3)
 
         return self.get_info()
 

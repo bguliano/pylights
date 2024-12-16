@@ -1,18 +1,1 @@
-{
-  "White Bottom": 25,
-  "White Middle": 5,
-  "White Top": 6,
-  "Color Bottom": 26,
-  "Color Middle": 9,
-  "Color Top": 11,
-  "Large Bulbs": 10,
-  "Star": 19,
-  "Mini Tree L": 3,
-  "Mini Tree R": 24,
-  "Plug 11": 22,
-  "Plug 12": 17,
-  "Plug 13": 23,
-  "Plug 14": 27,
-  "Plug 15": 2,
-  "Plug 16": 4
-}
+{"White Bottom": 3, "White Middle": 19, "White Top": 4, "Color Bottom": 2, "Color Middle": 6, "Color Top": 9, "Large Bulbs": 25, "Star": 26, "Mini Tree L": 17, "Mini Tree R": 11, "Plug 11": 23, "Plug 12": 24, "Plug 13": 10, "Plug 14": 27, "Plug 15": 22, "Plug 16": 5}

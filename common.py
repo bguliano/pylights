@@ -4,7 +4,7 @@ from pathlib import Path
 
 # ---- Constants ---------------------------------------------------------------------------------
 
-VERSION = 'alpha-0.1'
+VERSION = '1.0'
 
 NUM_LEDS_L = 554
 NUM_LEDS_R = 563
@@ -20,6 +20,7 @@ DEBUG_VIXEN_SAMPLE_FSEQ_PATH = Path('Vixen 3/Export/Carey Grinch.fseq')
 try:
     ZERO_IP = socket.gethostbyname('pylightszero.local')
 except socket.gaierror:
+    print('Debugging mode active; pylightszero control disabled')
     ZERO_IP = ''
 ZERO_PORT = 12345
 
