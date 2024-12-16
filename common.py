@@ -1,10 +1,11 @@
 import socket
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 # ---- Constants ---------------------------------------------------------------------------------
 
-VERSION = '1.0'
+VERSION = '1.0.1'
 
 NUM_LEDS_L = 554
 NUM_LEDS_R = 563
@@ -77,7 +78,7 @@ class SongDescriptor:
 @dataclass
 class SongsDescriptor:
     songs: list[SongDescriptor]
-    playing: SongDescriptor | None
+    playing: Optional[SongDescriptor]
     paused: bool
     current_time_ms: float
     volume: int  # 0-100
@@ -108,7 +109,7 @@ class PresetsDescriptor:
 
 @dataclass
 class RemapDescriptor:
-    remaining: list[str] | None
+    remaining: Optional[list[str]]
 
 
 @dataclass

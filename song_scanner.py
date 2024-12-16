@@ -2,6 +2,7 @@ import base64
 import json
 import re
 from pathlib import Path
+from typing import Optional
 
 import mutagen.mp3
 
@@ -14,7 +15,7 @@ class SongScanner:
         assert self.vixen_dir.exists()
         assert self.vixen_dir.name == 'Vixen 3'
 
-    def _create_song(self, tim_file: Path) -> Song | None:
+    def _create_song(self, tim_file: Path) -> Optional[Song]:
         fseq_dir = self.vixen_dir / 'Export'
         mp3_dir = self.vixen_dir / 'Media'
 
