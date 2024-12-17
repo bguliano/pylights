@@ -1,5 +1,5 @@
 import socket
-from enum import StrEnum
+from enum import Enum
 from pathlib import Path
 
 from fabric import Connection
@@ -18,11 +18,14 @@ class _ZeroClient(Connection):
         )
 
 
-class LEDServerCommand(StrEnum):
-    PLAY = 'PLAY'
-    PAUSE = 'PAUSE'
-    RESUME = 'RESUME'
-    STOP = 'STOP'
+class LEDServerCommand(Enum):
+    PLAY = 0
+    PAUSE = 1
+    RESUME = 2
+    STOP = 3
+
+    def to_str(self) -> str:
+        return ('PLAY', 'PAUSE', 'RESUME', 'STOP')[self.value]
 
 
 def _upload_show(zc: _ZeroClient, show_file: Path, current: int, total: int):
@@ -52,7 +55,7 @@ def send_led_server_command(command: LEDServerCommand) -> None:
         if ZERO_IP:  # ZERO_IP = '' when pi zero is offline
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((ZERO_IP, ZERO_PORT))
-                s.sendall(command.encode())
+                s.sendall(command.to_str().encode('utf-8'))
         print(f'Subcommand "{command}" sent successfully.')
     except ConnectionRefusedError:
         print('Could not connect to led_server. Ensure it is running.')
