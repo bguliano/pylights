@@ -1,7 +1,7 @@
-import json
 from dataclasses import asdict
 
 from flask import request, jsonify, Response, Flask
+from flask.json.provider import DefaultJSONProvider
 
 from common import VIXEN_DIR
 from pylightscontroller import PylightsController
@@ -9,7 +9,7 @@ from pylightscontroller import PylightsController
 
 # ---- Setup -------------------------------------------------------------------------------------
 
-class DataclassJSONEncoder(json.JSONEncoder):
+class CustomJSONProvider(DefaultJSONProvider):
     def default(self, obj):
         if hasattr(obj, '__dataclass_fields__'):
             return asdict(obj)
@@ -17,7 +17,7 @@ class DataclassJSONEncoder(json.JSONEncoder):
 
 
 app = Flask(__name__)
-app.json_encoder = DataclassJSONEncoder
+app.json = CustomJSONProvider(app)
 
 controller = PylightsController(VIXEN_DIR)
 
