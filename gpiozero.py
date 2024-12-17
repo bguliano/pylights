@@ -71,13 +71,13 @@ class LED:
         self._log_state()
 
     @property
-    def value(self):
+    def value(self) -> int:
         """Get the current state of the LED."""
         self._ensure_open()
-        return self._value
+        return int(self._value)
 
     @value.setter
-    def value(self, state):
+    def value(self, state: int):
         """Set the LED state."""
         self._ensure_open()
         self._value = bool(state)

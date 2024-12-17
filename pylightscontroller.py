@@ -180,7 +180,7 @@ class _LightsController(_ImplementsGetInfo):
     def get_info(self) -> LightsDescriptor:
         return LightsDescriptor(
             lights=[
-                LightDescriptor(name=name, gpio=relay.pin.number, value=relay.value)
+                LightDescriptor(name=name, gpio=relay.pin.number, value=bool(relay.value))
                 for name, relay in relay_reference.mapping.items()
             ]
         )
