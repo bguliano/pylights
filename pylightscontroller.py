@@ -301,9 +301,8 @@ class _DeveloperController(_ImplementsGetInfo):
         self.vixen_dir = vixen_dir
 
     def recompile_shows(self) -> DeveloperDescriptor:
-        # all_show_files = generate_all_show_files()
-        # upload_shows(all_show_files)
-        time.sleep(3)
+        all_show_files = generate_all_show_files()
+        upload_shows(all_show_files)
 
         return self.get_info()
 
