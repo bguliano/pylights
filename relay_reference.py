@@ -1,11 +1,11 @@
 import json
 from pathlib import Path
-from typing import TypeAlias, Iterable
+from typing import Iterable
 
 import gpiozero
 
-Relay: TypeAlias = gpiozero.LED
-RelayMapping: TypeAlias = dict[str, Relay]
+Relay = gpiozero.LED
+RelayMapping = dict[str, Relay]
 
 
 class RelayReference:
