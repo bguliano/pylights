@@ -13,8 +13,6 @@ class DataclassJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if hasattr(obj, '__dataclass_fields__'):
             return asdict(obj)
-        if isinstance(obj, bool):
-            return obj
         return super().default(obj)
 
 

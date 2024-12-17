@@ -4,7 +4,7 @@ import time
 from abc import ABC, abstractmethod
 from pathlib import Path
 from threading import Thread, Event
-from typing import Iterator, Optional
+from typing import Iterator
 
 import mutagen.mp3
 import psutil
@@ -35,8 +35,8 @@ class _SongsController(_ImplementsGetInfo):
         self.songs = SongScanner(vixen_dir).scan()
 
         pygame.mixer.init()
-        self.current_song: Optional[Song] = None
-        self.song_thread: Optional[Thread] = None
+        self.current_song: Song | None = None
+        self.song_thread: Thread | None = None
         self.song_thread_stop = Event()
         self.paused = True
 
@@ -227,9 +227,9 @@ class RemapNameDoesNotExist(Exception):
 
 class _RemapController(_ImplementsGetInfo):
     def __init__(self):
-        self.remap: Optional[dict[str, Optional[int]]] = None
-        self.relay_iterator: Optional[Iterator] = None
-        self.current_relay: Optional[Relay] = None
+        self.remap: dict[str, int | None] | None = None
+        self.relay_iterator: Iterator | None = None
+        self.current_relay: Relay | None = None
 
     def start(self) -> RemapDescriptor:
         if self.remap is not None:
